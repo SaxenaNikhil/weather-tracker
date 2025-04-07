@@ -48,7 +48,7 @@ The app's appearance changes automatically based on weather conditions:
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/weather-tracker.git
+git clone https://github.com/SaxenaNikhil/weather-tracking.git
 ```
 
 2. Navigate to the project directory:
