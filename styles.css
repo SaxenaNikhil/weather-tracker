@@ -209,6 +209,111 @@ header h1::after {
     animation: fadeIn 0.5s ease-out forwards;
 }
 
+.charts-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 400px), 1fr));
+    gap: clamp(10px, 2vw, 20px);
+    margin: clamp(10px, 2vw, 20px) 0;
+    padding: clamp(10px, 2vw, 20px);
+    background: var(--card-bg);
+    border-radius: clamp(10px, 2vw, 20px);
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: var(--transition);
+}
+
+.chart-wrapper {
+    position: relative;
+    height: clamp(250px, 40vh, 350px);
+    padding: clamp(8px, 1.5vw, 15px);
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: clamp(8px, 1.5vw, 15px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transition: var(--transition);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+}
+
+.chart-wrapper::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+    opacity: 0;
+    transition: var(--transition);
+}
+
+.chart-wrapper:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.chart-wrapper:hover::before {
+    opacity: 1;
+}
+
+/* Portrait phones */
+@media screen and (max-width: 480px) {
+    .charts-container {
+        gap: 10px;
+        padding: 10px;
+        margin: 10px 0;
+    }
+
+    .chart-wrapper {
+        height: 200px;
+        padding: 8px;
+    }
+
+    .chart-wrapper:hover {
+        transform: none;
+    }
+}
+
+/* Landscape phones */
+@media screen and (max-height: 480px) and (orientation: landscape) {
+    .charts-container {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        padding: 8px;
+    }
+
+    .chart-wrapper {
+        height: 180px;
+        padding: 5px;
+    }
+}
+
+/* Tablets */
+@media screen and (min-width: 768px) and (max-width: 1023px) {
+    .charts-container {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .chart-wrapper {
+        height: 300px;
+    }
+}
+
+/* Large screens */
+@media screen and (min-width: 1024px) {
+    .charts-container {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Add smooth transitions for chart tooltips */
+canvas {
+    transition: var(--transition);
+    width: 100% !important;
+    height: 100% !important;
+}
+
 .current-weather {
     background: var(--card-bg);
     padding: 2rem;

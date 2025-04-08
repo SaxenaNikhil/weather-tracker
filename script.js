@@ -13,6 +13,123 @@ const currentWeather = document.getElementById('currentWeather');
 const forecastContainer = document.getElementById('forecastContainer');
 const favoritesList = document.getElementById('favoritesList');
 const settingsBtn = document.getElementById('settingsBtn');
+const tempChartCanvas = document.getElementById('temperatureChart');
+const precipChartCanvas = document.getElementById('precipitationChart');
+
+// Chart instances
+let temperatureChart = null;
+let precipitationChart = null;
+
+// Chart configuration
+const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: {
+        duration: 2000,
+        easing: 'easeInOutQuart'
+    },
+    plugins: {
+        legend: {
+            display: true,
+            position: 'top',
+            labels: {
+                color: 'var(--text-color)',
+                font: {
+                    size: window.innerWidth < 768 ? 10 : 14,
+                    weight: '600',
+                    family: "'Segoe UI', sans-serif"
+                },
+                padding: window.innerWidth < 768 ? 10 : 20,
+                boxWidth: window.innerWidth < 768 ? 12 : 40,
+                usePointStyle: true,
+                pointStyle: 'circle'
+            }
+        },
+        tooltip: {
+            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+            titleColor: '#333',
+            titleFont: {
+                size: window.innerWidth < 768 ? 12 : 14,
+                weight: '600',
+                family: "'Segoe UI', sans-serif"
+            },
+            bodyColor: '#666',
+            bodyFont: {
+                size: window.innerWidth < 768 ? 11 : 13,
+                family: "'Segoe UI', sans-serif"
+            },
+            padding: window.innerWidth < 768 ? 8 : 12,
+            boxPadding: window.innerWidth < 768 ? 4 : 6,
+            borderColor: 'rgba(0, 0, 0, 0.1)',
+            borderWidth: 1,
+            cornerRadius: 8,
+            displayColors: true,
+            usePointStyle: true,
+            callbacks: {
+                label: function(context) {
+                    let label = context.dataset.label || '';
+                    if (label) {
+                        label += ': ';
+                    }
+                    label += context.parsed.y.toFixed(1);
+                    return label;
+                }
+            }
+        }
+    },
+    scales: {
+        x: {
+            grid: {
+                display: false,
+                drawBorder: false
+            },
+            ticks: {
+                color: 'var(--text-color)',
+                font: {
+                    size: window.innerWidth < 768 ? 8 : 12,
+                    family: "'Segoe UI', sans-serif"
+                },
+                maxRotation: window.innerWidth < 768 ? 45 : 45,
+                minRotation: window.innerWidth < 768 ? 45 : 45,
+                autoSkip: true,
+                maxTicksLimit: window.innerWidth < 768 ? 6 : 12
+            }
+        },
+        y: {
+            beginAtZero: false,
+            grid: {
+                color: 'rgba(255, 255, 255, 0.1)',
+                drawBorder: false
+            },
+            ticks: {
+                color: 'var(--text-color)',
+                font: {
+                    size: window.innerWidth < 768 ? 8 : 12,
+                    family: "'Segoe UI', sans-serif"
+                },
+                padding: window.innerWidth < 768 ? 5 : 10,
+                maxTicksLimit: window.innerWidth < 768 ? 5 : 8
+            }
+        }
+    },
+    elements: {
+        line: {
+            tension: 0.4
+        },
+        point: {
+            radius: window.innerWidth < 768 ? 2 : 4,
+            hoverRadius: window.innerWidth < 768 ? 4 : 6
+        }
+    },
+    layout: {
+        padding: {
+            left: window.innerWidth < 768 ? 5 : 10,
+            right: window.innerWidth < 768 ? 5 : 10,
+            top: window.innerWidth < 768 ? 5 : 10,
+            bottom: window.innerWidth < 768 ? 5 : 10
+        }
+    }
+};
 
 // Initialize favorite cities from localStorage
 let favoriteCities = JSON.parse(localStorage.getItem('favoriteCities')) || [];
@@ -269,6 +386,148 @@ function setThemeBasedOnWeather(weatherCode) {
     }
 }
 
+// Add resize handler for charts
+window.addEventListener('resize', () => {
+    if (temperatureChart) {
+        temperatureChart.resize();
+    }
+    if (precipitationChart) {
+        precipitationChart.resize();
+    }
+});
+
+// Create and update temperature chart
+function updateTemperatureChart(forecastData) {
+    const timestamps = forecastData.list.map(item => {
+        const date = new Date(item.dt * 1000);
+        return window.innerWidth < 768 ? 
+            date.toLocaleString('en-US', { 
+                hour: 'numeric',
+                hour12: true
+            }) :
+            date.toLocaleString('en-US', { 
+                weekday: 'short',
+                hour: 'numeric',
+                hour12: true
+            });
+    });
+    const temperatures = forecastData.list.map(item => item.main.temp);
+
+    const gradient = tempChartCanvas.getContext('2d').createLinearGradient(0, 0, 0, 300);
+    gradient.addColorStop(0, 'rgba(255, 99, 132, 0.5)');
+    gradient.addColorStop(1, 'rgba(255, 99, 132, 0.0)');
+
+    const data = {
+        labels: timestamps,
+        datasets: [{
+            label: 'Temperature (°C)',
+            data: temperatures,
+            borderColor: 'rgb(255, 99, 132)',
+            backgroundColor: gradient,
+            borderWidth: window.innerWidth < 768 ? 1.5 : 2,
+            fill: true,
+            pointBackgroundColor: 'rgb(255, 99, 132)',
+            pointBorderColor: '#fff',
+            pointHoverBackgroundColor: '#fff',
+            pointHoverBorderColor: 'rgb(255, 99, 132)',
+            pointHoverBorderWidth: window.innerWidth < 768 ? 1 : 2
+        }]
+    };
+
+    if (temperatureChart) {
+        temperatureChart.destroy();
+    }
+
+    temperatureChart = new Chart(tempChartCanvas, {
+        type: 'line',
+        data: data,
+        options: {
+            ...chartOptions,
+            plugins: {
+                ...chartOptions.plugins,
+                title: {
+                    display: true,
+                    text: 'Temperature Trend',
+                    color: 'var(--text-color)',
+                    font: {
+                        size: window.innerWidth < 768 ? 14 : 16,
+                        weight: '600',
+                        family: "'Segoe UI', sans-serif"
+                    },
+                    padding: window.innerWidth < 768 ? 10 : 20
+                }
+            }
+        }
+    });
+}
+
+// Create and update precipitation chart
+function updatePrecipitationChart(forecastData) {
+    const timestamps = forecastData.list.map(item => {
+        const date = new Date(item.dt * 1000);
+        return window.innerWidth < 768 ? 
+            date.toLocaleString('en-US', { 
+                hour: 'numeric',
+                hour12: true
+            }) :
+            date.toLocaleString('en-US', { 
+                weekday: 'short',
+                hour: 'numeric',
+                hour12: true
+            });
+    });
+    const precipitation = forecastData.list.map(item => item.rain ? item.rain['3h'] || 0 : 0);
+
+    const gradient = precipChartCanvas.getContext('2d').createLinearGradient(0, 0, 0, 300);
+    gradient.addColorStop(0, 'rgba(54, 162, 235, 0.5)');
+    gradient.addColorStop(1, 'rgba(54, 162, 235, 0.0)');
+
+    const data = {
+        labels: timestamps,
+        datasets: [{
+            label: 'Precipitation (mm)',
+            data: precipitation,
+            borderColor: 'rgb(54, 162, 235)',
+            backgroundColor: gradient,
+            borderWidth: window.innerWidth < 768 ? 1.5 : 2,
+            borderRadius: window.innerWidth < 768 ? 2 : 4,
+            hoverBackgroundColor: 'rgba(54, 162, 235, 0.7)'
+        }]
+    };
+
+    if (precipitationChart) {
+        precipitationChart.destroy();
+    }
+
+    precipitationChart = new Chart(precipChartCanvas, {
+        type: 'bar',
+        data: data,
+        options: {
+            ...chartOptions,
+            plugins: {
+                ...chartOptions.plugins,
+                title: {
+                    display: true,
+                    text: 'Precipitation Forecast',
+                    color: 'var(--text-color)',
+                    font: {
+                        size: window.innerWidth < 768 ? 14 : 16,
+                        weight: '600',
+                        family: "'Segoe UI', sans-serif"
+                    },
+                    padding: window.innerWidth < 768 ? 10 : 20
+                }
+            }
+        }
+    });
+}
+
+// Update both charts with new forecast data
+function updateCharts(forecastData) {
+    updateTemperatureChart(forecastData);
+    updatePrecipitationChart(forecastData);
+}
+
 // Fetch current weather
 async function getCurrentWeather(city) {
     try {
@@ -348,6 +607,9 @@ async function getForecast(city) {
         if (!response.ok) throw new Error('Forecast data not available');
         
         const data = await response.json();
+        
+        // Update charts with all forecast data
+        updateCharts(data);
         
         // Filter forecast data for each day (every 24 hours)
         const dailyForecasts = data.list.filter((item, index) => index % 8 === 0);
@@ -494,6 +756,9 @@ async function getForecastByCoordinates(lat, lon) {
         if (!response.ok) throw new Error('Forecast data not available');
         
         const data = await response.json();
+        
+        // Update charts with all forecast data
+        updateCharts(data);
         
         // Filter forecast data for each day (every 24 hours)
         const dailyForecasts = data.list.filter((item, index) => index % 8 === 0);
